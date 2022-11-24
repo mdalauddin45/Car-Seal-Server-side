@@ -31,6 +31,7 @@ function verifyJWT(req, res, next) {
       return res.status(403).send({ message: "Forbidden access" });
     }
     console.log(decoded);
+    console.log(token);
     req.decoded = decoded;
     next();
   });
