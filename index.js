@@ -17,6 +17,35 @@ const client = new MongoClient(uri, {
   serverApi: ServerApiVersion.v1,
 });
 
+async function run() {
+  try {
+    const categoryCollection = client.db("garibazar").collection("products");
+    const bookingsCollection = client.db("garibazar").collection("bookings");
+
+    // categoris get
+    app.get("/products", async (req, res) => {
+      const product = await categoryCollection.find({}).toArray();
+      res.send(product);
+    });
+    // categoris get
+    app.get("/categoris", async (req, res) => {
+      const product = await categoryCollection.find({}).toArray();
+      res.send(product);
+    });
+    // category single product get
+    app.get("/categoris/:category", async (req, res) => {
+      const category = req.params.category;
+      const query = { category: category };
+      const product = await categoryCollection.find(query).toArray();
+      res.send(product);
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+run().catch((err) => console.error(err));
+
 app.get("/", (req, res) => {
   res.send("Assignment server is running");
 });
