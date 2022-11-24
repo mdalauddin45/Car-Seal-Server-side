@@ -39,6 +39,39 @@ async function run() {
       const product = await categoryCollection.find(query).toArray();
       res.send(product);
     });
+
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      const query = {
+        selectedDate: booking.selectedDate,
+        email: booking.email,
+        item: booking.item,
+      };
+      const result = await bookingsCollection.insertOne(booking);
+      res.send(result);
+    });
+
+    // Get Bookings
+    app.get("/bookings", async (req, res) => {
+      let query = {};
+      const email = req.query.email;
+      if (email) {
+        query = {
+          guestEmail: email,
+        };
+      }
+      const cursor = bookingsCollection.find(query);
+      const bookings = await cursor.toArray();
+      res.send(bookings);
+    });
+
+    // Save bookings
+    app.post("/bookings", async (req, res) => {
+      const booking = req.body;
+      console.log(booking);
+      const result = await bookingsCollection.insertOne(booking);
+      res.send(result);
+    });
   } catch (error) {
     console.log(error);
   }
