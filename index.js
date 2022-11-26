@@ -7,14 +7,13 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const app = express();
 const port = process.env.PORT || 5000;
 
-// middlewares
-const corsConfig = {
-  origin: "",
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"],
-};
-app.use(cors(corsConfig));
-app.options("", cors(corsConfig));
+// // middlewares
+// const corsConfig = {
+//   origin: "",
+//   credentials: true,
+//   methods: ["GET", "POST", "PUT", "DELETE"],
+// };
+app.use(cors());
 app.use(express.json());
 
 //MongoDb Add
@@ -151,7 +150,7 @@ async function run() {
         return res.status(403).send({ message: "forbidden access" });
       }
       const query = {
-        "seller.email": email,
+        "seller.email": email || email,
       };
       const cursor = categoryCollection.find(query);
       const products = await cursor.toArray();
@@ -205,7 +204,6 @@ async function run() {
       const result = await categoryCollection.insertOne(product);
       res.send(result);
     });
-
     // Get Bookings
     app.get("/bookings", verifyJWT, async (req, res) => {
       let query = {};
@@ -233,15 +231,6 @@ async function run() {
       const booking = req.body;
       console.log(booking);
       const result = await bookingsCollection.insertOne(booking);
-
-      console.log("result----->", result);
-      sendMail(
-        {
-          subject: "Booking Successful!",
-          message: `Booking Id: ${result?.insertedId}, TransactionId: ${booking.transactionId}`,
-        },
-        booking?.guestEmail
-      );
       res.send(result);
     });
 
