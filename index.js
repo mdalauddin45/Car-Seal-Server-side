@@ -8,7 +8,13 @@ const app = express();
 const port = process.env.PORT || 5000;
 
 // middlewares
-app.use(cors());
+const corsConfig = {
+  origin: "",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+};
+app.use(cors(corsConfig));
+app.options("", cors(corsConfig));
 app.use(express.json());
 
 //MongoDb Add
@@ -38,6 +44,32 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
+
+// Send Email
+const sendMail = (emailData, email) => {
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL,
+      pass: process.env.PASS,
+    },
+  });
+
+  const mailOptions = {
+    from: process.env.EMAIL,
+    to: email,
+    subject: emailData?.subject,
+    html: `<p>${emailData?.message}</p>`,
+  };
+
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("Email sent: " + info.response);
+    }
+  });
+};
 
 async function run() {
   try {
@@ -104,23 +136,10 @@ async function run() {
       res.send(user);
     });
 
-    // categoris get
+    // get all products
     app.get("/products", async (req, res) => {
       const product = await categoryCollection.find({}).toArray();
       res.send(product);
-    });
-    // category single product get
-    app.get("/products/:category", async (req, res) => {
-      const category = req.params.category;
-      const query = { category: category };
-      const product = await categoryCollection.find(query).toArray();
-      res.send(product);
-    });
-    // post a products
-    app.post("/products", verifyJWT, async (req, res) => {
-      const product = req.body;
-      const result = await categoryCollection.insertOne(product);
-      res.send(result);
     });
 
     // Get All product for seller
@@ -139,22 +158,51 @@ async function run() {
       res.send(products);
     });
 
-    // Get Single Home
+    // get Single Category
+    app.get("/products/:category", async (req, res) => {
+      const category = req.params.category;
+      const query = { category: category };
+      const product = await categoryCollection.find(query).toArray();
+      res.send(product);
+    });
+
+    // Get Single product
     app.get("/product/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
-      const home = await categoryCollection.findOne(query);
-      res.send(home);
+      const product = await categoryCollection.findOne(query);
+      res.send(product);
+    });
+    // Delete a Product
+    app.delete("/product/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await categoryCollection.deleteOne(query);
+      res.send(result);
     });
 
-    app.post("/bookings", verifyJWT, async (req, res) => {
-      const booking = req.body;
-      const query = {
-        selectedDate: booking.selectedDate,
-        email: booking.email,
-        item: booking.item,
+    // Update A Home
+    app.put("/products", verifyJWT, async (req, res) => {
+      const product = req.body;
+      console.log(product);
+
+      const filter = {};
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: product,
       };
-      const result = await bookingsCollection.insertOne(booking);
+      const result = await categoryCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+      res.send(result);
+    });
+
+    // post a products
+    app.post("/products", verifyJWT, async (req, res) => {
+      const product = req.body;
+      const result = await categoryCollection.insertOne(product);
       res.send(result);
     });
 
@@ -185,6 +233,15 @@ async function run() {
       const booking = req.body;
       console.log(booking);
       const result = await bookingsCollection.insertOne(booking);
+
+      console.log("result----->", result);
+      sendMail(
+        {
+          subject: "Booking Successful!",
+          message: `Booking Id: ${result?.insertedId}, TransactionId: ${booking.transactionId}`,
+        },
+        booking?.guestEmail
+      );
       res.send(result);
     });
 
@@ -206,15 +263,13 @@ async function run() {
       const paymentIntent = await stripe.paymentIntents.create({
         currency: "usd",
         amount: amount,
-        // automatic_payment_methods: {
-        //   enabled: true,
-        // },
         payment_method_types: ["card"],
       });
       res.send({
         clientSecret: paymentIntent.client_secret,
       });
     });
+
     //payment collection
     app.post("/payments", async (req, res) => {
       const payment = req.body;
