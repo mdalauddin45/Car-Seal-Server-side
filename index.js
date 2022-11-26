@@ -44,31 +44,31 @@ function verifyJWT(req, res, next) {
   });
 }
 
-// Send Email
-const sendMail = (emailData, email) => {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASS,
-    },
-  });
+// // Send Email
+// const sendMail = (emailData, email) => {
+//   const transporter = nodemailer.createTransport({
+//     service: "gmail",
+//     auth: {
+//       user: process.env.EMAIL,
+//       pass: process.env.PASS,
+//     },
+//   });
 
-  const mailOptions = {
-    from: process.env.EMAIL,
-    to: email,
-    subject: emailData?.subject,
-    html: `<p>${emailData?.message}</p>`,
-  };
+//   const mailOptions = {
+//     from: process.env.EMAIL,
+//     to: email,
+//     subject: emailData?.subject,
+//     html: `<p>${emailData?.message}</p>`,
+//   };
 
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-    } else {
-      console.log("Email sent: " + info.response);
-    }
-  });
-};
+//   transporter.sendMail(mailOptions, function (error, info) {
+//     if (error) {
+//       console.log(error);
+//     } else {
+//       console.log("Email sent: " + info.response);
+//     }
+//   });
+// };
 
 async function run() {
   try {
@@ -157,8 +157,8 @@ async function run() {
       res.send(products);
     });
 
-    // get Single Category
-    app.get("/products/:category", async (req, res) => {
+    // // get Single Category
+    app.get("/products/:category", verifyAdmin, async (req, res) => {
       const category = req.params.category;
       const query = { category: category };
       const product = await categoryCollection.find(query).toArray();
@@ -166,12 +166,12 @@ async function run() {
     });
 
     // Get Single product
-    app.get("/product/:id", async (req, res) => {
-      const id = req.params.id;
-      const query = { _id: ObjectId(id) };
-      const product = await categoryCollection.findOne(query);
-      res.send(product);
-    });
+    // app.get("/product/:id", async (req, res) => {
+    //   const id = req.params.id;
+    //   const query = { _id: ObjectId(id) };
+    //   const product = await categoryCollection.findOne(query);
+    //   res.send(product);
+    // });
     // Delete a Product
     app.delete("/product/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
