@@ -147,7 +147,7 @@ async function run() {
       res.send(home);
     });
 
-    app.post("/bookings", async (req, res) => {
+    app.post("/bookings", verifyJWT, async (req, res) => {
       const booking = req.body;
       const query = {
         selectedDate: booking.selectedDate,
@@ -159,7 +159,7 @@ async function run() {
     });
 
     // Get Bookings
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings", verifyJWT, async (req, res) => {
       let query = {};
       const email = req.query.email;
       if (email) {
@@ -173,7 +173,7 @@ async function run() {
     });
 
     //get booking in a single id
-    app.get("/bookings/:id", async (req, res) => {
+    app.get("/bookings/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const booking = await bookingsCollection.findOne(query);
@@ -181,7 +181,7 @@ async function run() {
     });
 
     // Save bookings
-    app.post("/bookings", async (req, res) => {
+    app.post("/bookings", verifyJWT, async (req, res) => {
       const booking = req.body;
       console.log(booking);
       const result = await bookingsCollection.insertOne(booking);
