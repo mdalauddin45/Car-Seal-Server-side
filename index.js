@@ -3,6 +3,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -43,6 +44,7 @@ async function run() {
     const categoryCollection = client.db("garibazar").collection("products");
     const usersCollection = client.db("garibazar").collection("users");
     const bookingsCollection = client.db("garibazar").collection("bookings");
+    const paymentsCollection = client.db("garibazar").collection("payments");
 
     // Verify Admin
     const verifyAdmin = async (req, res, next) => {
