@@ -43,6 +43,7 @@ async function run() {
     const bookingsCollection = client.db("garibazar").collection("bookings");
     const wishlistsCollection = client.db("garibazar").collection("wishlists");
     const paymentsCollection = client.db("garibazar").collection("payments");
+    const addCollection = client.db("garibazar").collection("adds");
 
     // Verify Admin
     const verifyAdmin = async (req, res, next) => {
@@ -113,11 +114,22 @@ async function run() {
       res.send(product);
     });
     // get Single Category
-    app.get("/products/:category", async (req, res) => {
-      const category = req.params.category;
-      const query = { category: category };
-      const product = await categoryCollection.find(query).toArray();
-      res.send(product);
+    // app.get("/products/:category", async (req, res) => {
+    //   const category = req.params.category;
+    //   const query = { category: category };
+    //   const product = await categoryCollection.find(query).toArray();
+    //   res.send(product);
+    // });
+    // Get search result
+    app.get("/category", async (req, res) => {
+      const query = {};
+      const category = req.query.category;
+      if (category) query.category = category;
+
+      console.log(query);
+      const cursor = categoryCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
     });
     // Get All product for seller
     app.get("/products/:email", verifyJWT, async (req, res) => {
@@ -250,6 +262,42 @@ async function run() {
       res.send(result);
     });
 
+    //adds section
+    // Get Adds
+    app.get("/adds", verifyJWT, async (req, res) => {
+      let query = {};
+      const email = req.query.email;
+      if (email) {
+        query = {
+          email: email,
+        };
+      }
+      const cursor = addCollection.find(query);
+      const adds = await cursor.toArray();
+      res.send(adds);
+    });
+    //get adds in a single id
+    app.get("/adds/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: id };
+      const add = await addCollection.findOne(query);
+      res.send(add);
+    });
+
+    // Save add
+    app.post("/adds", verifyJWT, async (req, res) => {
+      const add = req.body;
+      const result = await addCollection.insertOne(add);
+      res.send(result);
+    });
+
+    // delet aadd
+    app.delete("/adds/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await addCollection.deleteOne(query);
+      res.send(result);
+    });
     //payment
     app.post("/create-payment-intent", async (req, res) => {
       const booking = req.body;
