@@ -190,7 +190,7 @@ async function run() {
     });
 
     //get booking in a single id
-    app.get("/bookings/:id", verifyJWT, async (req, res) => {
+    app.get("/bookings/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const booking = await bookingsCollection.findOne(query);
@@ -256,7 +256,6 @@ async function run() {
       const price = booking.price;
       const amount = price * 100;
 
-      // Create a PaymentIntent with the order amount and currency
       const paymentIntent = await stripe.paymentIntents.create({
         currency: "usd",
         amount: amount,
@@ -266,7 +265,6 @@ async function run() {
         clientSecret: paymentIntent.client_secret,
       });
     });
-
     //payment collection
     app.post("/payments", async (req, res) => {
       const payment = req.body;
