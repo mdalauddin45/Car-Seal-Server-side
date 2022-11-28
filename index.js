@@ -7,12 +7,6 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const app = express();
 const port = process.env.PORT || 5000;
 
-// // middlewares
-// const corsConfig = {
-//   origin: "",
-//   credentials: true,
-//   methods: ["GET", "POST", "PUT", "DELETE"],
-// };
 app.use(cors());
 app.use(express.json());
 
@@ -43,38 +37,12 @@ function verifyJWT(req, res, next) {
     next();
   });
 }
-
-// // Send Email
-// const sendMail = (emailData, email) => {
-//   const transporter = nodemailer.createTransport({
-//     service: "gmail",
-//     auth: {
-//       user: process.env.EMAIL,
-//       pass: process.env.PASS,
-//     },
-//   });
-
-//   const mailOptions = {
-//     from: process.env.EMAIL,
-//     to: email,
-//     subject: emailData?.subject,
-//     html: `<p>${emailData?.message}</p>`,
-//   };
-
-//   transporter.sendMail(mailOptions, function (error, info) {
-//     if (error) {
-//       console.log(error);
-//     } else {
-//       console.log("Email sent: " + info.response);
-//     }
-//   });
-// };
-
 async function run() {
   try {
     const categoryCollection = client.db("garibazar").collection("products");
     const usersCollection = client.db("garibazar").collection("users");
     const bookingsCollection = client.db("garibazar").collection("bookings");
+    const wishlistsCollection = client.db("garibazar").collection("wishlists");
     const paymentsCollection = client.db("garibazar").collection("payments");
 
     // Verify Admin
@@ -140,7 +108,13 @@ async function run() {
       const product = await categoryCollection.find({}).toArray();
       res.send(product);
     });
-
+    // get Single Category
+    app.get("/products/:category", async (req, res) => {
+      const category = req.params.category;
+      const query = { category: category };
+      const product = await categoryCollection.find(query).toArray();
+      res.send(product);
+    });
     // Get All product for seller
     app.get("/products/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
@@ -157,21 +131,20 @@ async function run() {
       res.send(products);
     });
 
-    // // get Single Category
-    app.get("/products/:category", verifyAdmin, async (req, res) => {
-      const category = req.params.category;
-      const query = { category: category };
-      const product = await categoryCollection.find(query).toArray();
-      res.send(product);
+    // post a products
+    app.post("/products", verifyJWT, async (req, res) => {
+      const product = req.body;
+      const result = await categoryCollection.insertOne(product);
+      res.send(result);
     });
 
     // Get Single product
-    // app.get("/product/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: ObjectId(id) };
-    //   const product = await categoryCollection.findOne(query);
-    //   res.send(product);
-    // });
+    app.get("/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const product = await categoryCollection.findOne(query);
+      res.send(product);
+    });
     // Delete a Product
     app.delete("/product/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
@@ -180,7 +153,7 @@ async function run() {
       res.send(result);
     });
 
-    // Update A Home
+    // Update A product
     app.put("/products", verifyJWT, async (req, res) => {
       const product = req.body;
       console.log(product);
@@ -197,13 +170,7 @@ async function run() {
       );
       res.send(result);
     });
-
-    // post a products
-    app.post("/products", verifyJWT, async (req, res) => {
-      const product = req.body;
-      const result = await categoryCollection.insertOne(product);
-      res.send(result);
-    });
+    // Booking colllection
     // Get Bookings
     app.get("/bookings", verifyJWT, async (req, res) => {
       let query = {};
@@ -239,6 +206,44 @@ async function run() {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
       const result = await bookingsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // wishlists colllection
+    // Get wishlists
+    app.get("/wishlists", verifyJWT, async (req, res) => {
+      let query = {};
+      const email = req.query.email;
+      if (email) {
+        query = {
+          email: email,
+        };
+      }
+      const cursor = wishlistsCollection.find(query);
+      const wishlists = await cursor.toArray();
+      res.send(wishlists);
+    });
+
+    //get wishlist in a single id
+    app.get("/wishlists/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: id };
+      const wishlist = await wishlistsCollection.findOne(query);
+      res.send(wishlist);
+    });
+
+    // Save wishlists
+    app.post("/wishlists", verifyJWT, async (req, res) => {
+      const wishlist = req.body;
+      const result = await wishlistsCollection.insertOne(wishlist);
+      res.send(result);
+    });
+
+    // delet a wishlist
+    app.delete("/wishlists/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await wishlistsCollection.deleteOne(query);
       res.send(result);
     });
 
