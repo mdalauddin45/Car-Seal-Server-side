@@ -32,7 +32,6 @@ function verifyJWT(req, res, next) {
       return res.status(403).send({ message: "Forbidden access" });
     }
     console.log(decoded);
-    console.log(token);
     req.decoded = decoded;
     next();
   });
@@ -54,7 +53,6 @@ async function run() {
       if (user?.role !== "admin") {
         return res.status(403).send({ message: "forbidden access" });
       }
-      console.log("Admin true");
       next();
     };
 
@@ -102,7 +100,13 @@ async function run() {
       const user = await usersCollection.findOne(query);
       res.send(user);
     });
-
+    // delet a user
+    app.delete("/users/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await usersCollection.deleteOne(query);
+      res.send(result);
+    });
     // get all products
     app.get("/products", async (req, res) => {
       const product = await categoryCollection.find({}).toArray();
@@ -196,7 +200,6 @@ async function run() {
     // Save bookings
     app.post("/bookings", verifyJWT, async (req, res) => {
       const booking = req.body;
-      console.log(booking);
       const result = await bookingsCollection.insertOne(booking);
       res.send(result);
     });
