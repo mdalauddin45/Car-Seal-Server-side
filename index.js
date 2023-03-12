@@ -113,24 +113,17 @@ async function run() {
       const product = await categoryCollection.find({}).toArray();
       res.send(product);
     });
-    // get Single Category
-    // app.get("/products/:category", async (req, res) => {
-    //   const category = req.params.category;
-    //   const query = { category: category };
-    //   const product = await categoryCollection.find(query).toArray();
-    //   res.send(product);
-    // });
-    // Get search result
-    app.get("/category", async (req, res) => {
-      const query = {};
-      const category = req.query.category;
-      if (category) query.category = category;
 
-      console.log(query);
+
+    app.get("/category/:category", async (req, res) => {
+      const category = req.params.category;
+      const query = { category: category };
       const cursor = categoryCollection.find(query);
-      const result = await cursor.toArray();
-      res.send(result);
+      const products = await cursor.toArray();
+      res.send(products);
     });
+
+
     // Get All product for seller
     app.get("/products/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
